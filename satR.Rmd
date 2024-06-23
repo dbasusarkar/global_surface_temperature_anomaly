@@ -1,0 +1,1896 @@
+---
+title: "satR - Global Mean Surface Air Temperature"
+output:
+  html_document:
+    toc: true
+    theme: united   
+  pdf_document:
+    toc: true
+    pandoc_args: --listings 
+    includes:
+      in_header: preamble.tex
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(tidyr)
+library(tidyverse)
+library(ncdf4) # for NetCDF
+library(colorspace)
+library(cowplot)
+library(ggforce)
+library(quantmod)
+library(ggplot2)
+library(ggridges) # for geom_density_ridges
+library(viridis)  # Load viridis for the viridis palette
+opts_chunk$set(fig.align="center", fig.height=4, fig.width=5.5)
+
+```
+
+## SST 
+
+```{r }
+
+test_csv_data <- 
+  read.csv("./sat_data/HadCRUT.5.0.2.0.analysis.summary_series.global.annual.csv")
+
+head(test_csv_data)
+print(colnames(test_csv_data)[2])
+
+plot(test_csv_data$Time, test_csv_data$Anomaly..deg.C.)
+
+test_csv_plot <- 
+    test_csv_data %>%
+        ggplot(
+            aes(
+                y = Anomaly..deg.C.,
+                x = Time
+            )
+        ) + 
+        geom_errorbar(
+                      aes(
+                          ymin = Lower.confidence.limit..2.5.., 
+                          ymax = Upper.confidence.limit..97.5..,
+                          color = 'red'),
+                      size = 1.25
+        ) +
+        geom_point(size = 3.5) +
+        scale_color_identity() +
+        scale_x_continuous(name = bquote('Time'), 
+#                           limits = c(1100,1700),
+#                           breaks = c(1100, 1200, 1300, 1400, 1500, 1600, 1700),
+#                           labels = c("1100", "1200", "1300", "1400", "1500", "1600", "1700"),#,
+                           expand = expansion(mult = c(0.05,0.05))
+        ) + 
+        scale_y_continuous(name = "Surface Air Temperature Anomaly", 
+#                           limits = c(0,28000), 
+#                           breaks = c(0, 7000, 14000, 21000, 28000),
+#                           labels = c("0", "7000", "14000", "21000", "28000"),#,
+                           expand = expansion(mult = c(0.1,0.1))
+        ) +
+        ggtitle(
+#            bquote('Raman Spectra of Samples from \n Haynesville Formation')
+            bquote("Time Evolution of Global Surface Air Temperature Anomaly (°C)")
+        ) + 
+        theme_bw() +
+        theme(
+            plot.title = element_text(hjust = 0.5, size = 30),
+            axis.title = element_text(size = 24),
+            axis.text = element_text(size = 18),
+            panel.grid.major.x = element_line(size=0.6),
+#            panel.grid.major.x = element_blank(),
+#            panel.grid.minor.x = element_blank(),
+#            panel.grid.major.x = element_line( size=.1, color="black" ),
+#            panel.grid.major.y = element_line(size=0.6),
+#            panel.grid.major.y = element_blank(),
+#            panel.grid.minor.y = element_blank()
+            panel.border = element_rect(size = 1)
+        )
+
+test_csv_plot
+
+aspect_ratio <- 1.4
+
+ggsave("test_csv_plot.png", 
+       test_csv_plot, 
+       height = 10 , 
+       width = 10 * aspect_ratio, 
+       path = "./"
+)
+
+test_nc_data <- 
+  nc_open("./sat_data/HadCRUT.5.0.2.0.analysis.summary_series.global.annual.nc")
+
+print(test_nc_data)
+
+print(attributes(test_nc_data$var))
+print(attributes(test_nc_data$dim))
+
+#test_sst <-
+#  ncvar_get(test_nc_data, "sst")
+#  
+#print(dim(test_sst))
+#
+#test_sst <-
+#  ncvar_get(test_nc_data, "sst")
+#  
+#head(test_sst)
+
+
+```
+
+
+#
+#```{r}
+##haynesville_scan_files = list.files(path="./haynesville/", pattern = "^[0-9]*.*[CSV]$")
+#haynesville_scan_files = list.files(path="./haynesville/")
+#haynesville_scan_filenames_no_csv = substr(haynesville_scan_files,1,28) 
+#
+#haynesville_df_list <- list()
+#for(idx in haynesville_scan_filenames_no_csv){
+##  append(haynesville_df_list,(paste("haynesville_df_",idx,sep="")))
+#  haynesville_df_list[[length(haynesville_df_list)+1]] = paste0("haynesville_df_",idx,sep="")
+#  assign(paste0("haynesville_df_",idx,sep=""), read.csv(paste0("./haynesville/",idx,".CSV", sep=""), 
+#    header = FALSE))
+#}
+#
+##haynesville_df_10979_10x_01_2_dash_1_dash_1
+##haynesville_df_10979_10x_02_2_dash_1_dash_1
+##haynesville_df_10979_10x_03_2_dash_1_dash_1
+##haynesville_df_10979_10x_04_2_dash_1_dash_1
+##haynesville_df_10979_10x_05_2_dash_1_dash_1
+##haynesville_df_10979_10x_06_2_dash_1_dash_1
+##haynesville_df_10979_10x_07_2_dash_1_dash_1
+##haynesville_df_10979_10x_08_2_dash_1_dash_1
+##haynesville_df_10979_10x_09_2_dash_1_dash_1
+##haynesville_df_10979_10x_10_2_dash_1_dash_1
+##haynesville_df_10979_10x_11_2_dash_1_dash_1
+##
+##haynesville_df_11071_10x_01_2_dash_1_dash_1
+##haynesville_df_11071_10x_02_2_dash_1_dash_1
+##haynesville_df_11071_10x_03_2_dash_1_dash_1
+##haynesville_df_11071_10x_04_2_dash_1_dash_1
+##haynesville_df_11071_10x_05_2_dash_1_dash_1
+##haynesville_df_11071_10x_06_2_dash_1_dash_1
+##haynesville_df_11071_10x_07_2_dash_1_dash_1
+##haynesville_df_11071_10x_08_2_dash_1_dash_1
+##haynesville_df_11071_10x_09_2_dash_1_dash_1
+##haynesville_df_11071_10x_10_2_dash_1_dash_1
+##haynesville_df_11071_10x_11_2_dash_1_dash_1
+##
+##haynesville_df_11122_10x_01_2_dash_1_dash_1
+##haynesville_df_11122_10x_02_2_dash_1_dash_1
+##haynesville_df_11122_10x_03_2_dash_1_dash_1
+##haynesville_df_11122_10x_04_2_dash_1_dash_1
+##haynesville_df_11122_10x_05_2_dash_1_dash_1
+##haynesville_df_11122_10x_06_2_dash_1_dash_1
+##haynesville_df_11122_10x_07_2_dash_1_dash_1
+##
+##haynesville_df_11178_10x_01_2_dash_1_dash_1
+##haynesville_df_11178_10x_02_2_dash_1_dash_1
+##haynesville_df_11178_10x_03_2_dash_1_dash_1
+##haynesville_df_11178_10x_04_2_dash_1_dash_1
+##haynesville_df_11178_10x_05_2_dash_1_dash_1
+##haynesville_df_11178_10x_06_2_dash_1_dash_1
+##haynesville_df_11178_10x_07_2_dash_1_dash_1
+##haynesville_df_11178_10x_08_2_dash_1_dash_1
+##haynesville_df_11178_10x_09_2_dash_1_dash_1
+##haynesville_df_11178_10x_10_2_dash_1_dash_1
+##haynesville_df_11178_10x_11_2_dash_1_dash_1
+##
+##haynesville_df_11226_10x_01_2_dash_1_dash_1
+##haynesville_df_11226_10x_02_2_dash_1_dash_1
+##haynesville_df_11226_10x_03_2_dash_1_dash_1
+##haynesville_df_11226_10x_04_2_dash_1_dash_1
+##haynesville_df_11226_10x_05_2_dash_1_dash_1
+##haynesville_df_11226_10x_06_2_dash_1_dash_1
+##haynesville_df_11226_10x_07_2_dash_1_dash_1
+#
+#colnames(haynesville_df_10979_10x_01_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_01_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_02_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_02_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_03_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_03_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_04_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_04_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_05_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_05_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_06_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_06_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_07_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_07_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_08_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_08_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_09_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_09_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_10_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_10_2_dash_1_dash_1)
+#colnames(haynesville_df_10979_10x_11_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_10979_10x_11_2_dash_1_dash_1)
+#
+#colnames(haynesville_df_11071_10x_01_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_01_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_02_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_02_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_03_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_03_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_04_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_04_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_05_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_05_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_06_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_06_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_07_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_07_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_08_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_08_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_09_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_09_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_10_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_10_2_dash_1_dash_1)
+#colnames(haynesville_df_11071_10x_11_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11071_10x_11_2_dash_1_dash_1)
+#
+#colnames(haynesville_df_11122_10x_01_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_01_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_02_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_02_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_03_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_03_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_04_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_04_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_05_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_05_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_06_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_06_2_dash_1_dash_1)
+#colnames(haynesville_df_11122_10x_07_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11122_10x_07_2_dash_1_dash_1)
+#
+#colnames(haynesville_df_11178_10x_01_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_01_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_02_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_02_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_03_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_03_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_04_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_04_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_05_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_05_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_06_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_06_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_07_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_07_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_08_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_08_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_09_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_09_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_10_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_10_2_dash_1_dash_1)
+#colnames(haynesville_df_11178_10x_11_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11178_10x_11_2_dash_1_dash_1)
+#
+#colnames(haynesville_df_11226_10x_01_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_01_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_02_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_02_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_03_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_03_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_04_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_04_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_05_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_05_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_06_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_06_2_dash_1_dash_1)
+#colnames(haynesville_df_11226_10x_07_2_dash_1_dash_1) <- c("raman_shift", "intensity")
+#str(haynesville_df_11226_10x_07_2_dash_1_dash_1)
+#
+##### ### NOT USEFUL #################
+#####lower_bound_df_point_7_2 <- quantile(df_point_7_2_dash_1_dash_1$intensity, 0.05)
+#####print(lower_bound_df_point_7_2)
+####
+#####upper_bound_df_point_7_2 <- quantile(df_point_7_2_dash_1_dash_1$intensity, 0.95)
+#####print(upper_bound_df_point_7_2)
+##### ################################
+#
+#### ### UPDATED LIST OF DATAFRAMES ###
+#
+#haynesville_list_sample_no = c("10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "10979_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11071_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11122_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11178_10X",
+#                               "11226_10X",
+#                               "11226_10X",
+#                               "11226_10X",
+#                               "11226_10X",
+#                               "11226_10X",
+#                               "11226_10X",
+#                               "11226_10X")
+#
+#haynesville_df_list_updated = rbind(haynesville_df_10979_10x_01_2_dash_1_dash_1, 
+#                                    haynesville_df_10979_10x_02_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_03_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_04_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_05_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_06_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_07_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_08_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_09_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_10_2_dash_1_dash_1,
+#                                    haynesville_df_10979_10x_11_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_01_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_02_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_03_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_04_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_05_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_06_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_07_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_08_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_09_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_10_2_dash_1_dash_1,
+#                                    haynesville_df_11071_10x_11_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_01_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_02_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_03_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_04_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_05_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_06_2_dash_1_dash_1,
+#                                    haynesville_df_11122_10x_07_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_01_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_02_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_03_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_04_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_05_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_06_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_07_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_08_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_09_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_10_2_dash_1_dash_1,
+#                                    haynesville_df_11178_10x_11_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_01_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_02_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_03_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_04_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_05_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_06_2_dash_1_dash_1,
+#                                    haynesville_df_11226_10x_07_2_dash_1_dash_1)
+#
+#haynesville_df_list_updated$sample_no = haynesville_list_sample_no
+#
+###### UPDATED LIST OF DATAFRAMES ###
+#
+##haynesville_df_10979_10x_01_2_dash_1_dash_1
+##haynesville_df_10979_10x_02_2_dash_1_dash_1
+##haynesville_df_10979_10x_03_2_dash_1_dash_1
+##haynesville_df_10979_10x_04_2_dash_1_dash_1
+##haynesville_df_10979_10x_05_2_dash_1_dash_1
+##haynesville_df_10979_10x_06_2_dash_1_dash_1
+##haynesville_df_10979_10x_07_2_dash_1_dash_1
+##haynesville_df_10979_10x_08_2_dash_1_dash_1
+##haynesville_df_10979_10x_09_2_dash_1_dash_1
+##haynesville_df_10979_10x_10_2_dash_1_dash_1
+##haynesville_df_10979_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_10979_10x_01_d_band <-
+#    haynesville_df_10979_10x_01_2_dash_1_dash_1[haynesville_df_10979_10x_01_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_01_d_band <-
+#    haynesville_df_10979_10x_01_d_band[haynesville_df_10979_10x_01_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_01_g_band <-
+#    haynesville_df_10979_10x_01_2_dash_1_dash_1[haynesville_df_10979_10x_01_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_01_g_band <-
+#    haynesville_df_10979_10x_01_g_band[haynesville_df_10979_10x_01_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_02_d_band <-
+#    haynesville_df_10979_10x_02_2_dash_1_dash_1[haynesville_df_10979_10x_02_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_02_d_band <-
+#    haynesville_df_10979_10x_02_d_band[haynesville_df_10979_10x_02_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_02_g_band <-
+#    haynesville_df_10979_10x_02_2_dash_1_dash_1[haynesville_df_10979_10x_02_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_02_g_band <-
+#    haynesville_df_10979_10x_02_g_band[haynesville_df_10979_10x_02_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_03_d_band <-
+#    haynesville_df_10979_10x_03_2_dash_1_dash_1[haynesville_df_10979_10x_03_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_03_d_band <-
+#    haynesville_df_10979_10x_03_d_band[haynesville_df_10979_10x_03_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_03_g_band <-
+#    haynesville_df_10979_10x_03_2_dash_1_dash_1[haynesville_df_10979_10x_03_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_03_g_band <-
+#    haynesville_df_10979_10x_03_g_band[haynesville_df_10979_10x_03_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_04_d_band <-
+#    haynesville_df_10979_10x_04_2_dash_1_dash_1[haynesville_df_10979_10x_04_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_04_d_band <-
+#    haynesville_df_10979_10x_04_d_band[haynesville_df_10979_10x_04_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_04_g_band <-
+#    haynesville_df_10979_10x_04_2_dash_1_dash_1[haynesville_df_10979_10x_04_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_04_g_band <-
+#    haynesville_df_10979_10x_04_g_band[haynesville_df_10979_10x_04_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_05_d_band <-
+#    haynesville_df_10979_10x_05_2_dash_1_dash_1[haynesville_df_10979_10x_05_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_05_d_band <-
+#    haynesville_df_10979_10x_05_d_band[haynesville_df_10979_10x_05_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_05_g_band <-
+#    haynesville_df_10979_10x_05_2_dash_1_dash_1[haynesville_df_10979_10x_05_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_05_g_band <-
+#    haynesville_df_10979_10x_05_g_band[haynesville_df_10979_10x_05_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_06_d_band <-
+#    haynesville_df_10979_10x_06_2_dash_1_dash_1[haynesville_df_10979_10x_06_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_06_d_band <-
+#    haynesville_df_10979_10x_06_d_band[haynesville_df_10979_10x_06_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_06_g_band <-
+#    haynesville_df_10979_10x_06_2_dash_1_dash_1[haynesville_df_10979_10x_06_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_06_g_band <-
+#    haynesville_df_10979_10x_06_g_band[haynesville_df_10979_10x_06_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_07_d_band <-
+#    haynesville_df_10979_10x_07_2_dash_1_dash_1[haynesville_df_10979_10x_07_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_07_d_band <-
+#    haynesville_df_10979_10x_07_d_band[haynesville_df_10979_10x_07_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_07_g_band <-
+#    haynesville_df_10979_10x_07_2_dash_1_dash_1[haynesville_df_10979_10x_07_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_07_g_band <-
+#    haynesville_df_10979_10x_07_g_band[haynesville_df_10979_10x_07_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_08_d_band <-
+#    haynesville_df_10979_10x_08_2_dash_1_dash_1[haynesville_df_10979_10x_08_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_08_d_band <-
+#    haynesville_df_10979_10x_08_d_band[haynesville_df_10979_10x_08_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_08_g_band <-
+#    haynesville_df_10979_10x_08_2_dash_1_dash_1[haynesville_df_10979_10x_08_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_08_g_band <-
+#    haynesville_df_10979_10x_08_g_band[haynesville_df_10979_10x_08_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_09_d_band <-
+#    haynesville_df_10979_10x_09_2_dash_1_dash_1[haynesville_df_10979_10x_09_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_09_d_band <-
+#    haynesville_df_10979_10x_09_d_band[haynesville_df_10979_10x_09_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_09_g_band <-
+#    haynesville_df_10979_10x_09_2_dash_1_dash_1[haynesville_df_10979_10x_09_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_09_g_band <-
+#    haynesville_df_10979_10x_09_g_band[haynesville_df_10979_10x_09_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_10_d_band <-
+#    haynesville_df_10979_10x_10_2_dash_1_dash_1[haynesville_df_10979_10x_10_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_10_d_band <-
+#    haynesville_df_10979_10x_10_d_band[haynesville_df_10979_10x_10_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_10_g_band <-
+#    haynesville_df_10979_10x_10_2_dash_1_dash_1[haynesville_df_10979_10x_10_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_10_g_band <-
+#    haynesville_df_10979_10x_10_g_band[haynesville_df_10979_10x_10_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_10979_10x_11_d_band <-
+#    haynesville_df_10979_10x_11_2_dash_1_dash_1[haynesville_df_10979_10x_11_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_10979_10x_11_d_band <-
+#    haynesville_df_10979_10x_11_d_band[haynesville_df_10979_10x_11_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_10979_10x_11_g_band <-
+#    haynesville_df_10979_10x_11_2_dash_1_dash_1[haynesville_df_10979_10x_11_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_10979_10x_11_g_band <-
+#    haynesville_df_10979_10x_11_g_band[haynesville_df_10979_10x_11_g_band$raman_shift <= 1700,c(1,2)]
+#
+##haynesville_df_11071_10x_01_2_dash_1_dash_1
+##haynesville_df_11071_10x_02_2_dash_1_dash_1
+##haynesville_df_11071_10x_03_2_dash_1_dash_1
+##haynesville_df_11071_10x_04_2_dash_1_dash_1
+##haynesville_df_11071_10x_05_2_dash_1_dash_1
+##haynesville_df_11071_10x_06_2_dash_1_dash_1
+##haynesville_df_11071_10x_07_2_dash_1_dash_1
+##haynesville_df_11071_10x_08_2_dash_1_dash_1
+##haynesville_df_11071_10x_09_2_dash_1_dash_1
+##haynesville_df_11071_10x_10_2_dash_1_dash_1
+##haynesville_df_11071_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_11071_10x_01_d_band <-
+#    haynesville_df_11071_10x_01_2_dash_1_dash_1[haynesville_df_11071_10x_01_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_01_d_band <-
+#    haynesville_df_11071_10x_01_d_band[haynesville_df_11071_10x_01_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_01_g_band <-
+#    haynesville_df_11071_10x_01_2_dash_1_dash_1[haynesville_df_11071_10x_01_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_01_g_band <-
+#    haynesville_df_11071_10x_01_g_band[haynesville_df_11071_10x_01_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_02_d_band <-
+#    haynesville_df_11071_10x_02_2_dash_1_dash_1[haynesville_df_11071_10x_02_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_02_d_band <-
+#    haynesville_df_11071_10x_02_d_band[haynesville_df_11071_10x_02_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_02_g_band <-
+#    haynesville_df_11071_10x_02_2_dash_1_dash_1[haynesville_df_11071_10x_02_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_02_g_band <-
+#    haynesville_df_11071_10x_02_g_band[haynesville_df_11071_10x_02_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_03_d_band <-
+#    haynesville_df_11071_10x_03_2_dash_1_dash_1[haynesville_df_11071_10x_03_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_03_d_band <-
+#    haynesville_df_11071_10x_03_d_band[haynesville_df_11071_10x_03_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_03_g_band <-
+#    haynesville_df_11071_10x_03_2_dash_1_dash_1[haynesville_df_11071_10x_03_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_03_g_band <-
+#    haynesville_df_11071_10x_03_g_band[haynesville_df_11071_10x_03_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_04_d_band <-
+#    haynesville_df_11071_10x_04_2_dash_1_dash_1[haynesville_df_11071_10x_04_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_04_d_band <-
+#    haynesville_df_11071_10x_04_d_band[haynesville_df_11071_10x_04_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_04_g_band <-
+#    haynesville_df_11071_10x_04_2_dash_1_dash_1[haynesville_df_11071_10x_04_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_04_g_band <-
+#    haynesville_df_11071_10x_04_g_band[haynesville_df_11071_10x_04_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_05_d_band <-
+#    haynesville_df_11071_10x_05_2_dash_1_dash_1[haynesville_df_11071_10x_05_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_05_d_band <-
+#    haynesville_df_11071_10x_05_d_band[haynesville_df_11071_10x_05_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_05_g_band <-
+#    haynesville_df_11071_10x_05_2_dash_1_dash_1[haynesville_df_11071_10x_05_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_05_g_band <-
+#    haynesville_df_11071_10x_05_g_band[haynesville_df_11071_10x_05_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_06_d_band <-
+#    haynesville_df_11071_10x_06_2_dash_1_dash_1[haynesville_df_11071_10x_06_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_06_d_band <-
+#    haynesville_df_11071_10x_06_d_band[haynesville_df_11071_10x_06_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_06_g_band <-
+#    haynesville_df_11071_10x_06_2_dash_1_dash_1[haynesville_df_11071_10x_06_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_06_g_band <-
+#    haynesville_df_11071_10x_06_g_band[haynesville_df_11071_10x_06_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_07_d_band <-
+#    haynesville_df_11071_10x_07_2_dash_1_dash_1[haynesville_df_11071_10x_07_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_07_d_band <-
+#    haynesville_df_11071_10x_07_d_band[haynesville_df_11071_10x_07_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_07_g_band <-
+#    haynesville_df_11071_10x_07_2_dash_1_dash_1[haynesville_df_11071_10x_07_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_07_g_band <-
+#    haynesville_df_11071_10x_07_g_band[haynesville_df_11071_10x_07_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_08_d_band <-
+#    haynesville_df_11071_10x_08_2_dash_1_dash_1[haynesville_df_11071_10x_08_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_08_d_band <-
+#    haynesville_df_11071_10x_08_d_band[haynesville_df_11071_10x_08_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_08_g_band <-
+#    haynesville_df_11071_10x_08_2_dash_1_dash_1[haynesville_df_11071_10x_08_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_08_g_band <-
+#    haynesville_df_11071_10x_08_g_band[haynesville_df_11071_10x_08_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_09_d_band <-
+#    haynesville_df_11071_10x_09_2_dash_1_dash_1[haynesville_df_11071_10x_09_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_09_d_band <-
+#    haynesville_df_11071_10x_09_d_band[haynesville_df_11071_10x_09_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_09_g_band <-
+#    haynesville_df_11071_10x_09_2_dash_1_dash_1[haynesville_df_11071_10x_09_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_09_g_band <-
+#    haynesville_df_11071_10x_09_g_band[haynesville_df_11071_10x_09_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_10_d_band <-
+#    haynesville_df_11071_10x_10_2_dash_1_dash_1[haynesville_df_11071_10x_10_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_10_d_band <-
+#    haynesville_df_11071_10x_10_d_band[haynesville_df_11071_10x_10_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_10_g_band <-
+#    haynesville_df_11071_10x_10_2_dash_1_dash_1[haynesville_df_11071_10x_10_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_10_g_band <-
+#    haynesville_df_11071_10x_10_g_band[haynesville_df_11071_10x_10_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11071_10x_11_d_band <-
+#    haynesville_df_11071_10x_11_2_dash_1_dash_1[haynesville_df_11071_10x_11_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11071_10x_11_d_band <-
+#    haynesville_df_11071_10x_11_d_band[haynesville_df_11071_10x_11_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11071_10x_11_g_band <-
+#    haynesville_df_11071_10x_11_2_dash_1_dash_1[haynesville_df_11071_10x_11_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11071_10x_11_g_band <-
+#    haynesville_df_11071_10x_11_g_band[haynesville_df_11071_10x_11_g_band$raman_shift <= 1700,c(1,2)]
+#
+##haynesville_df_11122_10x_01_2_dash_1_dash_1
+##haynesville_df_11122_10x_02_2_dash_1_dash_1
+##haynesville_df_11122_10x_03_2_dash_1_dash_1
+##haynesville_df_11122_10x_04_2_dash_1_dash_1
+##haynesville_df_11122_10x_05_2_dash_1_dash_1
+##haynesville_df_11122_10x_06_2_dash_1_dash_1
+##haynesville_df_11122_10x_07_2_dash_1_dash_1
+#
+#haynesville_df_11122_10x_01_d_band <-
+#    haynesville_df_11122_10x_01_2_dash_1_dash_1[haynesville_df_11122_10x_01_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_01_d_band <-
+#    haynesville_df_11122_10x_01_d_band[haynesville_df_11122_10x_01_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_01_g_band <-
+#    haynesville_df_11122_10x_01_2_dash_1_dash_1[haynesville_df_11122_10x_01_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_01_g_band <-
+#    haynesville_df_11122_10x_01_g_band[haynesville_df_11122_10x_01_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_02_d_band <-
+#    haynesville_df_11122_10x_02_2_dash_1_dash_1[haynesville_df_11122_10x_02_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_02_d_band <-
+#    haynesville_df_11122_10x_02_d_band[haynesville_df_11122_10x_02_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_02_g_band <-
+#    haynesville_df_11122_10x_02_2_dash_1_dash_1[haynesville_df_11122_10x_02_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_02_g_band <-
+#    haynesville_df_11122_10x_02_g_band[haynesville_df_11122_10x_02_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_03_d_band <-
+#    haynesville_df_11122_10x_03_2_dash_1_dash_1[haynesville_df_11122_10x_03_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_03_d_band <-
+#    haynesville_df_11122_10x_03_d_band[haynesville_df_11122_10x_03_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_03_g_band <-
+#    haynesville_df_11122_10x_03_2_dash_1_dash_1[haynesville_df_11122_10x_03_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_03_g_band <-
+#    haynesville_df_11122_10x_03_g_band[haynesville_df_11122_10x_03_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_04_d_band <-
+#    haynesville_df_11122_10x_04_2_dash_1_dash_1[haynesville_df_11122_10x_04_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_04_d_band <-
+#    haynesville_df_11122_10x_04_d_band[haynesville_df_11122_10x_04_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_04_g_band <-
+#    haynesville_df_11122_10x_04_2_dash_1_dash_1[haynesville_df_11122_10x_04_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_04_g_band <-
+#    haynesville_df_11122_10x_04_g_band[haynesville_df_11122_10x_04_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_05_d_band <-
+#    haynesville_df_11122_10x_05_2_dash_1_dash_1[haynesville_df_11122_10x_05_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_05_d_band <-
+#    haynesville_df_11122_10x_05_d_band[haynesville_df_11122_10x_05_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_05_g_band <-
+#    haynesville_df_11122_10x_05_2_dash_1_dash_1[haynesville_df_11122_10x_05_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_05_g_band <-
+#    haynesville_df_11122_10x_05_g_band[haynesville_df_11122_10x_05_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_06_d_band <-
+#    haynesville_df_11122_10x_06_2_dash_1_dash_1[haynesville_df_11122_10x_06_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_06_d_band <-
+#    haynesville_df_11122_10x_06_d_band[haynesville_df_11122_10x_06_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_06_g_band <-
+#    haynesville_df_11122_10x_06_2_dash_1_dash_1[haynesville_df_11122_10x_06_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_06_g_band <-
+#    haynesville_df_11122_10x_06_g_band[haynesville_df_11122_10x_06_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11122_10x_07_d_band <-
+#    haynesville_df_11122_10x_07_2_dash_1_dash_1[haynesville_df_11122_10x_07_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11122_10x_07_d_band <-
+#    haynesville_df_11122_10x_07_d_band[haynesville_df_11122_10x_07_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11122_10x_07_g_band <-
+#    haynesville_df_11122_10x_07_2_dash_1_dash_1[haynesville_df_11122_10x_07_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11122_10x_07_g_band <-
+#    haynesville_df_11122_10x_07_g_band[haynesville_df_11122_10x_07_g_band$raman_shift <= 1700,c(1,2)]
+#
+##haynesville_df_11178_10x_01_2_dash_1_dash_1
+##haynesville_df_11178_10x_02_2_dash_1_dash_1
+##haynesville_df_11178_10x_03_2_dash_1_dash_1
+##haynesville_df_11178_10x_04_2_dash_1_dash_1
+##haynesville_df_11178_10x_05_2_dash_1_dash_1
+##haynesville_df_11178_10x_06_2_dash_1_dash_1
+##haynesville_df_11178_10x_07_2_dash_1_dash_1
+##haynesville_df_11178_10x_08_2_dash_1_dash_1
+##haynesville_df_11178_10x_09_2_dash_1_dash_1
+##haynesville_df_11178_10x_10_2_dash_1_dash_1
+##haynesville_df_11178_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_11178_10x_01_d_band <-
+#    haynesville_df_11178_10x_01_2_dash_1_dash_1[haynesville_df_11178_10x_01_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_01_d_band <-
+#    haynesville_df_11178_10x_01_d_band[haynesville_df_11178_10x_01_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_01_g_band <-
+#    haynesville_df_11178_10x_01_2_dash_1_dash_1[haynesville_df_11178_10x_01_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_01_g_band <-
+#    haynesville_df_11178_10x_01_g_band[haynesville_df_11178_10x_01_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_02_d_band <-
+#    haynesville_df_11178_10x_02_2_dash_1_dash_1[haynesville_df_11178_10x_02_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_02_d_band <-
+#    haynesville_df_11178_10x_02_d_band[haynesville_df_11178_10x_02_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_02_g_band <-
+#    haynesville_df_11178_10x_02_2_dash_1_dash_1[haynesville_df_11178_10x_02_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_02_g_band <-
+#    haynesville_df_11178_10x_02_g_band[haynesville_df_11178_10x_02_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_03_d_band <-
+#    haynesville_df_11178_10x_03_2_dash_1_dash_1[haynesville_df_11178_10x_03_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_03_d_band <-
+#    haynesville_df_11178_10x_03_d_band[haynesville_df_11178_10x_03_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_03_g_band <-
+#    haynesville_df_11178_10x_03_2_dash_1_dash_1[haynesville_df_11178_10x_03_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_03_g_band <-
+#    haynesville_df_11178_10x_03_g_band[haynesville_df_11178_10x_03_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_04_d_band <-
+#    haynesville_df_11178_10x_04_2_dash_1_dash_1[haynesville_df_11178_10x_04_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_04_d_band <-
+#    haynesville_df_11178_10x_04_d_band[haynesville_df_11178_10x_04_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_04_g_band <-
+#    haynesville_df_11178_10x_04_2_dash_1_dash_1[haynesville_df_11178_10x_04_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_04_g_band <-
+#    haynesville_df_11178_10x_04_g_band[haynesville_df_11178_10x_04_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_05_d_band <-
+#    haynesville_df_11178_10x_05_2_dash_1_dash_1[haynesville_df_11178_10x_05_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_05_d_band <-
+#    haynesville_df_11178_10x_05_d_band[haynesville_df_11178_10x_05_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_05_g_band <-
+#    haynesville_df_11178_10x_05_2_dash_1_dash_1[haynesville_df_11178_10x_05_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_05_g_band <-
+#    haynesville_df_11178_10x_05_g_band[haynesville_df_11178_10x_05_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_06_d_band <-
+#    haynesville_df_11178_10x_06_2_dash_1_dash_1[haynesville_df_11178_10x_06_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_06_d_band <-
+#    haynesville_df_11178_10x_06_d_band[haynesville_df_11178_10x_06_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_06_g_band <-
+#    haynesville_df_11178_10x_06_2_dash_1_dash_1[haynesville_df_11178_10x_06_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_06_g_band <-
+#    haynesville_df_11178_10x_06_g_band[haynesville_df_11178_10x_06_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_07_d_band <-
+#    haynesville_df_11178_10x_07_2_dash_1_dash_1[haynesville_df_11178_10x_07_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_07_d_band <-
+#    haynesville_df_11178_10x_07_d_band[haynesville_df_11178_10x_07_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_07_g_band <-
+#    haynesville_df_11178_10x_07_2_dash_1_dash_1[haynesville_df_11178_10x_07_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_07_g_band <-
+#    haynesville_df_11178_10x_07_g_band[haynesville_df_11178_10x_07_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_08_d_band <-
+#    haynesville_df_11178_10x_08_2_dash_1_dash_1[haynesville_df_11178_10x_08_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_08_d_band <-
+#    haynesville_df_11178_10x_08_d_band[haynesville_df_11178_10x_08_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_08_g_band <-
+#    haynesville_df_11178_10x_08_2_dash_1_dash_1[haynesville_df_11178_10x_08_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_08_g_band <-
+#    haynesville_df_11178_10x_08_g_band[haynesville_df_11178_10x_08_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_09_d_band <-
+#    haynesville_df_11178_10x_09_2_dash_1_dash_1[haynesville_df_11178_10x_09_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_09_d_band <-
+#    haynesville_df_11178_10x_09_d_band[haynesville_df_11178_10x_09_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_09_g_band <-
+#    haynesville_df_11178_10x_09_2_dash_1_dash_1[haynesville_df_11178_10x_09_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_09_g_band <-
+#    haynesville_df_11178_10x_09_g_band[haynesville_df_11178_10x_09_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_10_d_band <-
+#    haynesville_df_11178_10x_10_2_dash_1_dash_1[haynesville_df_11178_10x_10_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_10_d_band <-
+#    haynesville_df_11178_10x_10_d_band[haynesville_df_11178_10x_10_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_10_g_band <-
+#    haynesville_df_11178_10x_10_2_dash_1_dash_1[haynesville_df_11178_10x_10_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_10_g_band <-
+#    haynesville_df_11178_10x_10_g_band[haynesville_df_11178_10x_10_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11178_10x_11_d_band <-
+#    haynesville_df_11178_10x_11_2_dash_1_dash_1[haynesville_df_11178_10x_11_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11178_10x_11_d_band <-
+#    haynesville_df_11178_10x_11_d_band[haynesville_df_11178_10x_11_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11178_10x_11_g_band <-
+#    haynesville_df_11178_10x_11_2_dash_1_dash_1[haynesville_df_11178_10x_11_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11178_10x_11_g_band <-
+#    haynesville_df_11178_10x_11_g_band[haynesville_df_11178_10x_11_g_band$raman_shift <= 1700,c(1,2)]
+#
+##haynesville_df_11226_10x_01_2_dash_1_dash_1
+##haynesville_df_11226_10x_02_2_dash_1_dash_1
+##haynesville_df_11226_10x_03_2_dash_1_dash_1
+##haynesville_df_11226_10x_04_2_dash_1_dash_1
+##haynesville_df_11226_10x_05_2_dash_1_dash_1
+##haynesville_df_11226_10x_06_2_dash_1_dash_1
+##haynesville_df_11226_10x_07_2_dash_1_dash_1
+#
+#haynesville_df_11226_10x_01_d_band <-
+#    haynesville_df_11226_10x_01_2_dash_1_dash_1[haynesville_df_11226_10x_01_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_01_d_band <-
+#    haynesville_df_11226_10x_01_d_band[haynesville_df_11226_10x_01_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_01_g_band <-
+#    haynesville_df_11226_10x_01_2_dash_1_dash_1[haynesville_df_11226_10x_01_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_01_g_band <-
+#    haynesville_df_11226_10x_01_g_band[haynesville_df_11226_10x_01_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_02_d_band <-
+#    haynesville_df_11226_10x_02_2_dash_1_dash_1[haynesville_df_11226_10x_02_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_02_d_band <-
+#    haynesville_df_11226_10x_02_d_band[haynesville_df_11226_10x_02_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_02_g_band <-
+#    haynesville_df_11226_10x_02_2_dash_1_dash_1[haynesville_df_11226_10x_02_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_02_g_band <-
+#    haynesville_df_11226_10x_02_g_band[haynesville_df_11226_10x_02_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_03_d_band <-
+#    haynesville_df_11226_10x_03_2_dash_1_dash_1[haynesville_df_11226_10x_03_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_03_d_band <-
+#    haynesville_df_11226_10x_03_d_band[haynesville_df_11226_10x_03_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_03_g_band <-
+#    haynesville_df_11226_10x_03_2_dash_1_dash_1[haynesville_df_11226_10x_03_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_03_g_band <-
+#    haynesville_df_11226_10x_03_g_band[haynesville_df_11226_10x_03_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_04_d_band <-
+#    haynesville_df_11226_10x_04_2_dash_1_dash_1[haynesville_df_11226_10x_04_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_04_d_band <-
+#    haynesville_df_11226_10x_04_d_band[haynesville_df_11226_10x_04_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_04_g_band <-
+#    haynesville_df_11226_10x_04_2_dash_1_dash_1[haynesville_df_11226_10x_04_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_04_g_band <-
+#    haynesville_df_11226_10x_04_g_band[haynesville_df_11226_10x_04_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_05_d_band <-
+#    haynesville_df_11226_10x_05_2_dash_1_dash_1[haynesville_df_11226_10x_05_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_05_d_band <-
+#    haynesville_df_11226_10x_05_d_band[haynesville_df_11226_10x_05_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_05_g_band <-
+#    haynesville_df_11226_10x_05_2_dash_1_dash_1[haynesville_df_11226_10x_05_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_05_g_band <-
+#    haynesville_df_11226_10x_05_g_band[haynesville_df_11226_10x_05_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_06_d_band <-
+#    haynesville_df_11226_10x_06_2_dash_1_dash_1[haynesville_df_11226_10x_06_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_06_d_band <-
+#    haynesville_df_11226_10x_06_d_band[haynesville_df_11226_10x_06_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_06_g_band <-
+#    haynesville_df_11226_10x_06_2_dash_1_dash_1[haynesville_df_11226_10x_06_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_06_g_band <-
+#    haynesville_df_11226_10x_06_g_band[haynesville_df_11226_10x_06_g_band$raman_shift <= 1700,c(1,2)]
+#
+#haynesville_df_11226_10x_07_d_band <-
+#    haynesville_df_11226_10x_07_2_dash_1_dash_1[haynesville_df_11226_10x_07_2_dash_1_dash_1$raman_shift < 1500,c(1,2)]
+#haynesville_df_11226_10x_07_d_band <-
+#    haynesville_df_11226_10x_07_d_band[haynesville_df_11226_10x_07_d_band$raman_shift >= 1200,c(1,2)]
+#haynesville_df_11226_10x_07_g_band <-
+#    haynesville_df_11226_10x_07_2_dash_1_dash_1[haynesville_df_11226_10x_07_2_dash_1_dash_1$raman_shift >= 1500,c(1,2)]
+#haynesville_df_11226_10x_07_g_band <-
+#    haynesville_df_11226_10x_07_g_band[haynesville_df_11226_10x_07_g_band$raman_shift <= 1700,c(1,2)]
+#
+##### ---
+#
+##haynesville_df_10979_10x_01_2_dash_1_dash_1
+##haynesville_df_10979_10x_02_2_dash_1_dash_1
+##haynesville_df_10979_10x_03_2_dash_1_dash_1
+##haynesville_df_10979_10x_04_2_dash_1_dash_1
+##haynesville_df_10979_10x_05_2_dash_1_dash_1
+##haynesville_df_10979_10x_06_2_dash_1_dash_1
+##haynesville_df_10979_10x_07_2_dash_1_dash_1
+##haynesville_df_10979_10x_08_2_dash_1_dash_1
+##haynesville_df_10979_10x_09_2_dash_1_dash_1
+##haynesville_df_10979_10x_10_2_dash_1_dash_1
+##haynesville_df_10979_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_10979_10x_01_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_01_d_band$intensity))]
+#haynesville_df_10979_10x_01_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_01_g_band$intensity))]
+#
+#haynesville_df_10979_10x_02_d_peak_freq <-
+#    haynesville_df_10979_10x_02_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_02_d_band$intensity))]
+#haynesville_df_10979_10x_02_g_peak_freq <-
+#    haynesville_df_10979_10x_02_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_02_g_band$intensity))]
+#
+#haynesville_df_10979_10x_03_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_03_d_band$intensity))]
+#haynesville_df_10979_10x_03_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_03_g_band$intensity))]
+#
+#haynesville_df_10979_10x_04_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_04_d_band$intensity))]
+#haynesville_df_10979_10x_04_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_04_g_band$intensity))]
+#
+#haynesville_df_10979_10x_05_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_05_d_band$intensity))]
+#haynesville_df_10979_10x_05_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_05_g_band$intensity))]
+#
+#haynesville_df_10979_10x_06_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_06_d_band$intensity))]
+#haynesville_df_10979_10x_06_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_06_g_band$intensity))]
+#
+#haynesville_df_10979_10x_07_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_07_d_band$intensity))]
+#haynesville_df_10979_10x_07_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_07_g_band$intensity))]
+#
+#haynesville_df_10979_10x_08_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_08_d_band$intensity))]
+#haynesville_df_10979_10x_08_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_08_g_band$intensity))]
+#
+#haynesville_df_10979_10x_09_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_09_d_band$intensity))]
+#haynesville_df_10979_10x_09_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_09_g_band$intensity))]
+#
+#haynesville_df_10979_10x_10_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_10_d_band$intensity))]
+#haynesville_df_10979_10x_10_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_10_g_band$intensity))]
+#
+#haynesville_df_10979_10x_11_d_peak_freq <-
+#    haynesville_df_10979_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_10979_10x_11_d_band$intensity))]
+#haynesville_df_10979_10x_11_g_peak_freq <-
+#    haynesville_df_10979_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_10979_10x_11_g_band$intensity))]
+#
+##haynesville_df_11071_10x_01_2_dash_1_dash_1
+##haynesville_df_11071_10x_02_2_dash_1_dash_1
+##haynesville_df_11071_10x_03_2_dash_1_dash_1
+##haynesville_df_11071_10x_04_2_dash_1_dash_1
+##haynesville_df_11071_10x_05_2_dash_1_dash_1
+##haynesville_df_11071_10x_06_2_dash_1_dash_1
+##haynesville_df_11071_10x_07_2_dash_1_dash_1
+##haynesville_df_11071_10x_08_2_dash_1_dash_1
+##haynesville_df_11071_10x_09_2_dash_1_dash_1
+##haynesville_df_11071_10x_10_2_dash_1_dash_1
+##haynesville_df_11071_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_11071_10x_01_d_peak_freq <-
+#    haynesville_df_11071_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_01_d_band$intensity))]
+#haynesville_df_11071_10x_01_g_peak_freq <-
+#    haynesville_df_11071_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_01_g_band$intensity))]
+#
+#haynesville_df_11071_10x_02_d_peak_freq <-
+#    haynesville_df_11071_10x_02_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_02_d_band$intensity))]
+#haynesville_df_11071_10x_02_g_peak_freq <-
+#    haynesville_df_11071_10x_02_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_02_g_band$intensity))]
+#
+#haynesville_df_11071_10x_03_d_peak_freq <-
+#    haynesville_df_11071_10x_03_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_03_d_band$intensity))]
+#haynesville_df_11071_10x_03_g_peak_freq <-
+#    haynesville_df_11071_10x_03_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_03_g_band$intensity))]
+#
+#haynesville_df_11071_10x_04_d_peak_freq <-
+#    haynesville_df_11071_10x_04_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_04_d_band$intensity))]
+#haynesville_df_11071_10x_04_g_peak_freq <-
+#    haynesville_df_11071_10x_04_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_04_g_band$intensity))]
+#
+#haynesville_df_11071_10x_05_d_peak_freq <-
+#    haynesville_df_11071_10x_05_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_05_d_band$intensity))]
+#haynesville_df_11071_10x_05_g_peak_freq <-
+#    haynesville_df_11071_10x_05_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_05_g_band$intensity))]
+#
+#haynesville_df_11071_10x_06_d_peak_freq <-
+#    haynesville_df_11071_10x_06_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_06_d_band$intensity))]
+#haynesville_df_11071_10x_06_g_peak_freq <-
+#    haynesville_df_11071_10x_06_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_06_g_band$intensity))]
+#
+#haynesville_df_11071_10x_07_d_peak_freq <-
+#    haynesville_df_11071_10x_07_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_07_d_band$intensity))]
+#haynesville_df_11071_10x_07_g_peak_freq <-
+#    haynesville_df_11071_10x_07_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_07_g_band$intensity))]
+#
+#haynesville_df_11071_10x_08_d_peak_freq <-
+#    haynesville_df_11071_10x_08_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_08_d_band$intensity))]
+#haynesville_df_11071_10x_08_g_peak_freq <-
+#    haynesville_df_11071_10x_08_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_08_g_band$intensity))]
+#
+#haynesville_df_11071_10x_09_d_peak_freq <-
+#    haynesville_df_11071_10x_09_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_09_d_band$intensity))]
+#haynesville_df_11071_10x_09_g_peak_freq <-
+#    haynesville_df_11071_10x_09_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_09_g_band$intensity))]
+#
+#haynesville_df_11071_10x_10_d_peak_freq <-
+#    haynesville_df_11071_10x_10_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_10_d_band$intensity))]
+#haynesville_df_11071_10x_10_g_peak_freq <-
+#    haynesville_df_11071_10x_10_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_10_g_band$intensity))]
+#
+#haynesville_df_11071_10x_11_d_peak_freq <-
+#    haynesville_df_11071_10x_11_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_11_d_band$intensity))]
+#haynesville_df_11071_10x_11_g_peak_freq <-
+#    haynesville_df_11071_10x_11_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_11_g_band$intensity))]
+#
+##haynesville_df_11122_10x_01_2_dash_1_dash_1
+##haynesville_df_11122_10x_02_2_dash_1_dash_1
+##haynesville_df_11122_10x_03_2_dash_1_dash_1
+##haynesville_df_11122_10x_04_2_dash_1_dash_1
+##haynesville_df_11122_10x_05_2_dash_1_dash_1
+##haynesville_df_11122_10x_06_2_dash_1_dash_1
+##haynesville_df_11122_10x_07_2_dash_1_dash_1
+#
+#haynesville_df_11122_10x_01_d_peak_freq <-
+#    haynesville_df_11122_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_01_d_band$intensity))]
+#haynesville_df_11122_10x_01_g_peak_freq <-
+#    haynesville_df_11122_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_01_g_band$intensity))]
+#
+#haynesville_df_11122_10x_02_d_peak_freq <-
+#    haynesville_df_11122_10x_02_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_02_d_band$intensity))]
+#haynesville_df_11122_10x_02_g_peak_freq <-
+#    haynesville_df_11122_10x_02_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_02_g_band$intensity))]
+#
+#haynesville_df_11122_10x_03_d_peak_freq <-
+#    haynesville_df_11122_10x_03_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_03_d_band$intensity))]
+#haynesville_df_11122_10x_03_g_peak_freq <-
+#    haynesville_df_11122_10x_03_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_03_g_band$intensity))]
+#
+#haynesville_df_11122_10x_04_d_peak_freq <-
+#    haynesville_df_11122_10x_04_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_04_d_band$intensity))]
+#haynesville_df_11122_10x_04_g_peak_freq <-
+#    haynesville_df_11122_10x_04_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_04_g_band$intensity))]
+#
+#haynesville_df_11122_10x_05_d_peak_freq <-
+#    haynesville_df_11122_10x_05_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_05_d_band$intensity))]
+#haynesville_df_11122_10x_05_g_peak_freq <-
+#    haynesville_df_11122_10x_05_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_05_g_band$intensity))]
+#
+#haynesville_df_11122_10x_06_d_peak_freq <-
+#    haynesville_df_11122_10x_06_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_06_d_band$intensity))]
+#haynesville_df_11122_10x_06_g_peak_freq <-
+#    haynesville_df_11122_10x_06_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_06_g_band$intensity))]
+#
+#haynesville_df_11122_10x_07_d_peak_freq <-
+#    haynesville_df_11122_10x_07_d_band$raman_shift[which.max(abs(haynesville_df_11071_10x_07_d_band$intensity))]
+#haynesville_df_11122_10x_07_g_peak_freq <-
+#    haynesville_df_11122_10x_07_g_band$raman_shift[which.max(abs(haynesville_df_11071_10x_07_g_band$intensity))]
+#
+##haynesville_df_11178_10x_01_2_dash_1_dash_1
+##haynesville_df_11178_10x_02_2_dash_1_dash_1
+##haynesville_df_11178_10x_03_2_dash_1_dash_1
+##haynesville_df_11178_10x_04_2_dash_1_dash_1
+##haynesville_df_11178_10x_05_2_dash_1_dash_1
+##haynesville_df_11178_10x_06_2_dash_1_dash_1
+##haynesville_df_11178_10x_07_2_dash_1_dash_1
+##haynesville_df_11178_10x_08_2_dash_1_dash_1
+##haynesville_df_11178_10x_09_2_dash_1_dash_1
+##haynesville_df_11178_10x_10_2_dash_1_dash_1
+##haynesville_df_11178_10x_11_2_dash_1_dash_1
+#
+#haynesville_df_11178_10x_01_d_peak_freq <-
+#    haynesville_df_11178_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_01_d_band$intensity))]
+#haynesville_df_11178_10x_01_g_peak_freq <-
+#    haynesville_df_11178_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_01_g_band$intensity))]
+#
+#haynesville_df_11178_10x_02_d_peak_freq <-
+#    haynesville_df_11178_10x_02_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_02_d_band$intensity))]
+#haynesville_df_11178_10x_02_g_peak_freq <-
+#    haynesville_df_11178_10x_02_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_02_g_band$intensity))]
+#
+#haynesville_df_11178_10x_03_d_peak_freq <-
+#    haynesville_df_11178_10x_03_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_03_d_band$intensity))]
+#haynesville_df_11178_10x_03_g_peak_freq <-
+#    haynesville_df_11178_10x_03_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_03_g_band$intensity))]
+#
+#haynesville_df_11178_10x_04_d_peak_freq <-
+#    haynesville_df_11178_10x_04_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_04_d_band$intensity))]
+#haynesville_df_11178_10x_04_g_peak_freq <-
+#    haynesville_df_11178_10x_04_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_04_g_band$intensity))]
+#
+#haynesville_df_11178_10x_05_d_peak_freq <-
+#    haynesville_df_11178_10x_05_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_05_d_band$intensity))]
+#haynesville_df_11178_10x_05_g_peak_freq <-
+#    haynesville_df_11178_10x_05_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_05_g_band$intensity))]
+#
+#haynesville_df_11178_10x_06_d_peak_freq <-
+#    haynesville_df_11178_10x_06_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_06_d_band$intensity))]
+#haynesville_df_11178_10x_06_g_peak_freq <-
+#    haynesville_df_11178_10x_06_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_06_g_band$intensity))]
+#
+#haynesville_df_11178_10x_07_d_peak_freq <-
+#    haynesville_df_11178_10x_07_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_07_d_band$intensity))]
+#haynesville_df_11178_10x_07_g_peak_freq <-
+#    haynesville_df_11178_10x_07_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_07_g_band$intensity))]
+#
+#haynesville_df_11178_10x_08_d_peak_freq <-
+#    haynesville_df_11178_10x_08_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_08_d_band$intensity))]
+#haynesville_df_11178_10x_08_g_peak_freq <-
+#    haynesville_df_11178_10x_08_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_08_g_band$intensity))]
+#
+#haynesville_df_11178_10x_09_d_peak_freq <-
+#    haynesville_df_11178_10x_09_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_09_d_band$intensity))]
+#haynesville_df_11178_10x_09_g_peak_freq <-
+#    haynesville_df_11178_10x_09_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_09_g_band$intensity))]
+#
+#haynesville_df_11178_10x_10_d_peak_freq <-
+#    haynesville_df_11178_10x_10_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_10_d_band$intensity))]
+#haynesville_df_11178_10x_10_g_peak_freq <-
+#    haynesville_df_11178_10x_10_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_10_g_band$intensity))]
+#
+#haynesville_df_11178_10x_11_d_peak_freq <-
+#    haynesville_df_11178_10x_11_d_band$raman_shift[which.max(abs(haynesville_df_11178_10x_11_d_band$intensity))]
+#haynesville_df_11178_10x_11_g_peak_freq <-
+#    haynesville_df_11178_10x_11_g_band$raman_shift[which.max(abs(haynesville_df_11178_10x_11_g_band$intensity))]
+#
+##haynesville_df_11226_10x_01_2_dash_1_dash_1
+##haynesville_df_11226_10x_02_2_dash_1_dash_1
+##haynesville_df_11226_10x_03_2_dash_1_dash_1
+##haynesville_df_11226_10x_04_2_dash_1_dash_1
+##haynesville_df_11226_10x_05_2_dash_1_dash_1
+##haynesville_df_11226_10x_06_2_dash_1_dash_1
+##haynesville_df_11226_10x_07_2_dash_1_dash_1
+#
+#haynesville_df_11226_10x_01_d_peak_freq <-
+#    haynesville_df_11226_10x_01_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_01_d_band$intensity))]
+#haynesville_df_11226_10x_01_g_peak_freq <-
+#    haynesville_df_11226_10x_01_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_01_g_band$intensity))]
+#
+#haynesville_df_11226_10x_02_d_peak_freq <-
+#    haynesville_df_11226_10x_02_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_02_d_band$intensity))]
+#haynesville_df_11226_10x_02_g_peak_freq <-
+#    haynesville_df_11226_10x_02_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_02_g_band$intensity))]
+#
+#haynesville_df_11226_10x_03_d_peak_freq <-
+#    haynesville_df_11226_10x_03_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_03_d_band$intensity))]
+#haynesville_df_11226_10x_03_g_peak_freq <-
+#    haynesville_df_11226_10x_03_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_03_g_band$intensity))]
+#
+#haynesville_df_11226_10x_04_d_peak_freq <-
+#    haynesville_df_11226_10x_04_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_04_d_band$intensity))]
+#haynesville_df_11226_10x_04_g_peak_freq <-
+#    haynesville_df_11226_10x_04_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_04_g_band$intensity))]
+#
+#haynesville_df_11226_10x_05_d_peak_freq <-
+#    haynesville_df_11226_10x_05_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_05_d_band$intensity))]
+#haynesville_df_11226_10x_05_g_peak_freq <-
+#    haynesville_df_11226_10x_05_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_05_g_band$intensity))]
+#
+#haynesville_df_11226_10x_06_d_peak_freq <-
+#    haynesville_df_11226_10x_06_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_06_d_band$intensity))]
+#haynesville_df_11226_10x_06_g_peak_freq <-
+#    haynesville_df_11226_10x_06_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_06_g_band$intensity))]
+#
+#haynesville_df_11226_10x_07_d_peak_freq <-
+#    haynesville_df_11226_10x_07_d_band$raman_shift[which.max(abs(haynesville_df_11226_10x_07_d_band$intensity))]
+#haynesville_df_11226_10x_07_g_peak_freq <-
+#    haynesville_df_11226_10x_07_g_band$raman_shift[which.max(abs(haynesville_df_11226_10x_07_g_band$intensity))]
+#
+##### ---
+#
+#haynesville_df_10979_10x_01_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_01_d_band$intensity))]
+#haynesville_df_10979_10x_01_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_01_g_band$intensity))]
+#
+#haynesville_df_10979_10x_02_d_peak_intensity <-
+#    haynesville_df_10979_10x_02_d_band$intensity[which.max(abs(haynesville_df_10979_10x_02_d_band$intensity))]
+#haynesville_df_10979_10x_02_g_peak_intensity <-
+#    haynesville_df_10979_10x_02_g_band$intensity[which.max(abs(haynesville_df_10979_10x_02_g_band$intensity))]
+#
+#haynesville_df_10979_10x_03_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_03_d_band$intensity))]
+#haynesville_df_10979_10x_03_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_03_g_band$intensity))]
+#
+#haynesville_df_10979_10x_04_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_04_d_band$intensity))]
+#haynesville_df_10979_10x_04_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_04_g_band$intensity))]
+#
+#haynesville_df_10979_10x_05_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_05_d_band$intensity))]
+#haynesville_df_10979_10x_05_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_05_g_band$intensity))]
+#
+#haynesville_df_10979_10x_06_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_06_d_band$intensity))]
+#haynesville_df_10979_10x_06_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_06_g_band$intensity))]
+#
+#haynesville_df_10979_10x_07_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_07_d_band$intensity))]
+#haynesville_df_10979_10x_07_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_07_g_band$intensity))]
+#
+#haynesville_df_10979_10x_08_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_08_d_band$intensity))]
+#haynesville_df_10979_10x_08_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_08_g_band$intensity))]
+#
+#haynesville_df_10979_10x_09_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_09_d_band$intensity))]
+#haynesville_df_10979_10x_09_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_09_g_band$intensity))]
+#
+#haynesville_df_10979_10x_10_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_10_d_band$intensity))]
+#haynesville_df_10979_10x_10_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_10_g_band$intensity))]
+#
+#haynesville_df_10979_10x_11_d_peak_intensity <-
+#    haynesville_df_10979_10x_01_d_band$intensity[which.max(abs(haynesville_df_10979_10x_11_d_band$intensity))]
+#haynesville_df_10979_10x_11_g_peak_intensity <-
+#    haynesville_df_10979_10x_01_g_band$intensity[which.max(abs(haynesville_df_10979_10x_11_g_band$intensity))]
+#
+#haynesville_df_11071_10x_01_d_peak_intensity <-
+#    haynesville_df_11071_10x_01_d_band$intensity[which.max(abs(haynesville_df_11071_10x_01_d_band$intensity))]
+#haynesville_df_11071_10x_01_g_peak_intensity <-
+#    haynesville_df_11071_10x_01_g_band$intensity[which.max(abs(haynesville_df_11071_10x_01_g_band$intensity))]
+#
+#haynesville_df_11071_10x_02_d_peak_intensity <-
+#    haynesville_df_11071_10x_02_d_band$intensity[which.max(abs(haynesville_df_11071_10x_02_d_band$intensity))]
+#haynesville_df_11071_10x_02_g_peak_intensity <-
+#    haynesville_df_11071_10x_02_g_band$intensity[which.max(abs(haynesville_df_11071_10x_02_g_band$intensity))]
+#
+#haynesville_df_11071_10x_03_d_peak_intensity <-
+#    haynesville_df_11071_10x_03_d_band$intensity[which.max(abs(haynesville_df_11071_10x_03_d_band$intensity))]
+#haynesville_df_11071_10x_03_g_peak_intensity <-
+#    haynesville_df_11071_10x_03_g_band$intensity[which.max(abs(haynesville_df_11071_10x_03_g_band$intensity))]
+#
+#haynesville_df_11071_10x_04_d_peak_intensity <-
+#    haynesville_df_11071_10x_04_d_band$intensity[which.max(abs(haynesville_df_11071_10x_04_d_band$intensity))]
+#haynesville_df_11071_10x_04_g_peak_intensity <-
+#    haynesville_df_11071_10x_04_g_band$intensity[which.max(abs(haynesville_df_11071_10x_04_g_band$intensity))]
+#
+#haynesville_df_11071_10x_05_d_peak_intensity <-
+#    haynesville_df_11071_10x_05_d_band$intensity[which.max(abs(haynesville_df_11071_10x_05_d_band$intensity))]
+#haynesville_df_11071_10x_05_g_peak_intensity <-
+#    haynesville_df_11071_10x_05_g_band$intensity[which.max(abs(haynesville_df_11071_10x_05_g_band$intensity))]
+#
+#haynesville_df_11071_10x_06_d_peak_intensity <-
+#    haynesville_df_11071_10x_06_d_band$intensity[which.max(abs(haynesville_df_11071_10x_06_d_band$intensity))]
+#haynesville_df_11071_10x_06_g_peak_intensity <-
+#    haynesville_df_11071_10x_06_g_band$intensity[which.max(abs(haynesville_df_11071_10x_06_g_band$intensity))]
+#
+#haynesville_df_11071_10x_07_d_peak_intensity <-
+#    haynesville_df_11071_10x_07_d_band$intensity[which.max(abs(haynesville_df_11071_10x_07_d_band$intensity))]
+#haynesville_df_11071_10x_07_g_peak_intensity <-
+#    haynesville_df_11071_10x_07_g_band$intensity[which.max(abs(haynesville_df_11071_10x_07_g_band$intensity))]
+#
+#haynesville_df_11071_10x_08_d_peak_intensity <-
+#    haynesville_df_11071_10x_08_d_band$intensity[which.max(abs(haynesville_df_11071_10x_08_d_band$intensity))]
+#haynesville_df_11071_10x_08_g_peak_intensity <-
+#    haynesville_df_11071_10x_08_g_band$intensity[which.max(abs(haynesville_df_11071_10x_08_g_band$intensity))]
+#
+#haynesville_df_11071_10x_09_d_peak_intensity <-
+#    haynesville_df_11071_10x_09_d_band$intensity[which.max(abs(haynesville_df_11071_10x_09_d_band$intensity))]
+#haynesville_df_11071_10x_09_g_peak_intensity <-
+#    haynesville_df_11071_10x_09_g_band$intensity[which.max(abs(haynesville_df_11071_10x_09_g_band$intensity))]
+#
+#haynesville_df_11071_10x_10_d_peak_intensity <-
+#    haynesville_df_11071_10x_10_d_band$intensity[which.max(abs(haynesville_df_11071_10x_10_d_band$intensity))]
+#haynesville_df_11071_10x_10_g_peak_intensity <-
+#    haynesville_df_11071_10x_10_g_band$intensity[which.max(abs(haynesville_df_11071_10x_10_g_band$intensity))]
+#
+#haynesville_df_11071_10x_11_d_peak_intensity <-
+#    haynesville_df_11071_10x_11_d_band$intensity[which.max(abs(haynesville_df_11071_10x_11_d_band$intensity))]
+#haynesville_df_11071_10x_11_g_peak_intensity <-
+#    haynesville_df_11071_10x_11_g_band$intensity[which.max(abs(haynesville_df_11071_10x_11_g_band$intensity))]
+#
+#haynesville_df_11122_10x_01_d_peak_intensity <-
+#    haynesville_df_11122_10x_01_d_band$intensity[which.max(abs(haynesville_df_11071_10x_01_d_band$intensity))]
+#haynesville_df_11122_10x_01_g_peak_intensity <-
+#    haynesville_df_11122_10x_01_g_band$intensity[which.max(abs(haynesville_df_11071_10x_01_g_band$intensity))]
+#
+#haynesville_df_11122_10x_02_d_peak_intensity <-
+#    haynesville_df_11122_10x_02_d_band$intensity[which.max(abs(haynesville_df_11071_10x_02_d_band$intensity))]
+#haynesville_df_11122_10x_02_g_peak_intensity <-
+#    haynesville_df_11122_10x_02_g_band$intensity[which.max(abs(haynesville_df_11071_10x_02_g_band$intensity))]
+#
+#haynesville_df_11122_10x_03_d_peak_intensity <-
+#    haynesville_df_11122_10x_03_d_band$intensity[which.max(abs(haynesville_df_11071_10x_03_d_band$intensity))]
+#haynesville_df_11122_10x_03_g_peak_intensity <-
+#    haynesville_df_11122_10x_03_g_band$intensity[which.max(abs(haynesville_df_11071_10x_03_g_band$intensity))]
+#
+#haynesville_df_11122_10x_04_d_peak_intensity <-
+#    haynesville_df_11122_10x_04_d_band$intensity[which.max(abs(haynesville_df_11071_10x_04_d_band$intensity))]
+#haynesville_df_11122_10x_04_g_peak_intensity <-
+#    haynesville_df_11122_10x_04_g_band$intensity[which.max(abs(haynesville_df_11071_10x_04_g_band$intensity))]
+#
+#haynesville_df_11122_10x_05_d_peak_intensity <-
+#    haynesville_df_11122_10x_05_d_band$intensity[which.max(abs(haynesville_df_11071_10x_05_d_band$intensity))]
+#haynesville_df_11122_10x_05_g_peak_intensity <-
+#    haynesville_df_11122_10x_05_g_band$intensity[which.max(abs(haynesville_df_11071_10x_05_g_band$intensity))]
+#
+#haynesville_df_11122_10x_06_d_peak_intensity <-
+#    haynesville_df_11122_10x_06_d_band$intensity[which.max(abs(haynesville_df_11071_10x_06_d_band$intensity))]
+#haynesville_df_11122_10x_06_g_peak_intensity <-
+#    haynesville_df_11122_10x_06_g_band$intensity[which.max(abs(haynesville_df_11071_10x_06_g_band$intensity))]
+#
+#haynesville_df_11122_10x_07_d_peak_intensity <-
+#    haynesville_df_11122_10x_07_d_band$intensity[which.max(abs(haynesville_df_11071_10x_07_d_band$intensity))]
+#haynesville_df_11122_10x_07_g_peak_intensity <-
+#    haynesville_df_11122_10x_07_g_band$intensity[which.max(abs(haynesville_df_11071_10x_07_g_band$intensity))]
+#
+#haynesville_df_11178_10x_01_d_peak_intensity <-
+#    haynesville_df_11178_10x_01_d_band$intensity[which.max(abs(haynesville_df_11178_10x_01_d_band$intensity))]
+#haynesville_df_11178_10x_01_g_peak_intensity <-
+#    haynesville_df_11178_10x_01_g_band$intensity[which.max(abs(haynesville_df_11178_10x_01_g_band$intensity))]
+#
+#haynesville_df_11178_10x_02_d_peak_intensity <-
+#    haynesville_df_11178_10x_02_d_band$intensity[which.max(abs(haynesville_df_11178_10x_02_d_band$intensity))]
+#haynesville_df_11178_10x_02_g_peak_intensity <-
+#    haynesville_df_11178_10x_02_g_band$intensity[which.max(abs(haynesville_df_11178_10x_02_g_band$intensity))]
+#
+#haynesville_df_11178_10x_03_d_peak_intensity <-
+#    haynesville_df_11178_10x_03_d_band$intensity[which.max(abs(haynesville_df_11178_10x_03_d_band$intensity))]
+#haynesville_df_11178_10x_03_g_peak_intensity <-
+#    haynesville_df_11178_10x_03_g_band$intensity[which.max(abs(haynesville_df_11178_10x_03_g_band$intensity))]
+#
+#haynesville_df_11178_10x_04_d_peak_intensity <-
+#    haynesville_df_11178_10x_04_d_band$intensity[which.max(abs(haynesville_df_11178_10x_04_d_band$intensity))]
+#haynesville_df_11178_10x_04_g_peak_intensity <-
+#    haynesville_df_11178_10x_04_g_band$intensity[which.max(abs(haynesville_df_11178_10x_04_g_band$intensity))]
+#
+#haynesville_df_11178_10x_05_d_peak_intensity <-
+#    haynesville_df_11178_10x_05_d_band$intensity[which.max(abs(haynesville_df_11178_10x_05_d_band$intensity))]
+#haynesville_df_11178_10x_05_g_peak_intensity <-
+#    haynesville_df_11178_10x_05_g_band$intensity[which.max(abs(haynesville_df_11178_10x_05_g_band$intensity))]
+#
+#haynesville_df_11178_10x_06_d_peak_intensity <-
+#    haynesville_df_11178_10x_06_d_band$intensity[which.max(abs(haynesville_df_11178_10x_06_d_band$intensity))]
+#haynesville_df_11178_10x_06_g_peak_intensity <-
+#    haynesville_df_11178_10x_06_g_band$intensity[which.max(abs(haynesville_df_11178_10x_06_g_band$intensity))]
+#
+#haynesville_df_11178_10x_07_d_peak_intensity <-
+#    haynesville_df_11178_10x_07_d_band$intensity[which.max(abs(haynesville_df_11178_10x_07_d_band$intensity))]
+#haynesville_df_11178_10x_07_g_peak_intensity <-
+#    haynesville_df_11178_10x_07_g_band$intensity[which.max(abs(haynesville_df_11178_10x_07_g_band$intensity))]
+#
+#haynesville_df_11178_10x_08_d_peak_intensity <-
+#    haynesville_df_11178_10x_08_d_band$intensity[which.max(abs(haynesville_df_11178_10x_08_d_band$intensity))]
+#haynesville_df_11178_10x_08_g_peak_intensity <-
+#    haynesville_df_11178_10x_08_g_band$intensity[which.max(abs(haynesville_df_11178_10x_08_g_band$intensity))]
+#
+#haynesville_df_11178_10x_09_d_peak_intensity <-
+#    haynesville_df_11178_10x_09_d_band$intensity[which.max(abs(haynesville_df_11178_10x_09_d_band$intensity))]
+#haynesville_df_11178_10x_09_g_peak_intensity <-
+#    haynesville_df_11178_10x_09_g_band$intensity[which.max(abs(haynesville_df_11178_10x_09_g_band$intensity))]
+#
+#haynesville_df_11178_10x_10_d_peak_intensity <-
+#    haynesville_df_11178_10x_10_d_band$intensity[which.max(abs(haynesville_df_11178_10x_10_d_band$intensity))]
+#haynesville_df_11178_10x_10_g_peak_intensity <-
+#    haynesville_df_11178_10x_10_g_band$intensity[which.max(abs(haynesville_df_11178_10x_10_g_band$intensity))]
+#
+#haynesville_df_11178_10x_11_d_peak_intensity <-
+#    haynesville_df_11178_10x_11_d_band$intensity[which.max(abs(haynesville_df_11178_10x_11_d_band$intensity))]
+#haynesville_df_11178_10x_11_g_peak_intensity <-
+#    haynesville_df_11178_10x_11_g_band$intensity[which.max(abs(haynesville_df_11178_10x_11_g_band$intensity))]
+#
+#haynesville_df_11226_10x_01_d_peak_intensity <-
+#    haynesville_df_11226_10x_01_d_band$intensity[which.max(abs(haynesville_df_11226_10x_01_d_band$intensity))]
+#haynesville_df_11226_10x_01_g_peak_intensity <-
+#    haynesville_df_11226_10x_01_g_band$intensity[which.max(abs(haynesville_df_11226_10x_01_g_band$intensity))]
+#
+#haynesville_df_11226_10x_02_d_peak_intensity <-
+#    haynesville_df_11226_10x_02_d_band$intensity[which.max(abs(haynesville_df_11226_10x_02_d_band$intensity))]
+#haynesville_df_11226_10x_02_g_peak_intensity <-
+#    haynesville_df_11226_10x_02_g_band$intensity[which.max(abs(haynesville_df_11226_10x_02_g_band$intensity))]
+#
+#haynesville_df_11226_10x_03_d_peak_intensity <-
+#    haynesville_df_11226_10x_03_d_band$intensity[which.max(abs(haynesville_df_11226_10x_03_d_band$intensity))]
+#haynesville_df_11226_10x_03_g_peak_intensity <-
+#    haynesville_df_11226_10x_03_g_band$intensity[which.max(abs(haynesville_df_11226_10x_03_g_band$intensity))]
+#
+#haynesville_df_11226_10x_04_d_peak_intensity <-
+#    haynesville_df_11226_10x_04_d_band$intensity[which.max(abs(haynesville_df_11226_10x_04_d_band$intensity))]
+#haynesville_df_11226_10x_04_g_peak_intensity <-
+#    haynesville_df_11226_10x_04_g_band$intensity[which.max(abs(haynesville_df_11226_10x_04_g_band$intensity))]
+#
+#haynesville_df_11226_10x_05_d_peak_intensity <-
+#    haynesville_df_11226_10x_05_d_band$intensity[which.max(abs(haynesville_df_11226_10x_05_d_band$intensity))]
+#haynesville_df_11226_10x_05_g_peak_intensity <-
+#    haynesville_df_11226_10x_05_g_band$intensity[which.max(abs(haynesville_df_11226_10x_05_g_band$intensity))]
+#
+#haynesville_df_11226_10x_06_d_peak_intensity <-
+#    haynesville_df_11226_10x_06_d_band$intensity[which.max(abs(haynesville_df_11226_10x_06_d_band$intensity))]
+#haynesville_df_11226_10x_06_g_peak_intensity <-
+#    haynesville_df_11226_10x_06_g_band$intensity[which.max(abs(haynesville_df_11226_10x_06_g_band$intensity))]
+#
+#haynesville_df_11226_10x_07_d_peak_intensity <-
+#    haynesville_df_11226_10x_07_d_band$intensity[which.max(abs(haynesville_df_11226_10x_07_d_band$intensity))]
+#haynesville_df_11226_10x_07_g_peak_intensity <-
+#    haynesville_df_11226_10x_07_g_band$intensity[which.max(abs(haynesville_df_11226_10x_07_g_band$intensity))]
+#
+##### ---
+#
+#haynesville_sample_no = c("10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "10979_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11071_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11122_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11178_10X",
+#                          "11226_10X",
+#                          "11226_10X",
+#                          "11226_10X",
+#                          "11226_10X",
+#                          "11226_10X",
+#                          "11226_10X",
+#                          "11226_10X")
+#
+#haynesville_g_peak_freq <- c(haynesville_df_10979_10x_01_g_peak_freq,
+#                             haynesville_df_10979_10x_02_g_peak_freq,
+#                             haynesville_df_10979_10x_03_g_peak_freq,
+#                             haynesville_df_10979_10x_04_g_peak_freq,
+#                             haynesville_df_10979_10x_05_g_peak_freq,
+#                             haynesville_df_10979_10x_06_g_peak_freq,
+#                             haynesville_df_10979_10x_07_g_peak_freq,
+#                             haynesville_df_10979_10x_08_g_peak_freq,
+#                             haynesville_df_10979_10x_09_g_peak_freq,
+#                             haynesville_df_10979_10x_10_g_peak_freq,
+#                             haynesville_df_10979_10x_11_g_peak_freq,
+#                             haynesville_df_11071_10x_01_g_peak_freq,
+#                             haynesville_df_11071_10x_02_g_peak_freq,
+#                             haynesville_df_11071_10x_03_g_peak_freq,
+#                             haynesville_df_11071_10x_04_g_peak_freq,
+#                             haynesville_df_11071_10x_05_g_peak_freq,
+#                             haynesville_df_11071_10x_06_g_peak_freq,
+#                             haynesville_df_11071_10x_07_g_peak_freq,
+#                             haynesville_df_11071_10x_08_g_peak_freq,
+#                             haynesville_df_11071_10x_09_g_peak_freq,
+#                             haynesville_df_11071_10x_10_g_peak_freq,
+#                             haynesville_df_11071_10x_11_g_peak_freq,
+#                             haynesville_df_11122_10x_01_g_peak_freq,
+#                             haynesville_df_11122_10x_02_g_peak_freq,
+#                             haynesville_df_11122_10x_03_g_peak_freq,
+#                             haynesville_df_11122_10x_04_g_peak_freq,
+#                             haynesville_df_11122_10x_05_g_peak_freq,
+#                             haynesville_df_11122_10x_06_g_peak_freq,
+#                             haynesville_df_11122_10x_07_g_peak_freq,
+#                             haynesville_df_11178_10x_01_g_peak_freq,
+#                             haynesville_df_11178_10x_02_g_peak_freq,
+#                             haynesville_df_11178_10x_03_g_peak_freq,
+#                             haynesville_df_11178_10x_04_g_peak_freq,
+#                             haynesville_df_11178_10x_05_g_peak_freq,
+#                             haynesville_df_11178_10x_06_g_peak_freq,
+#                             haynesville_df_11178_10x_07_g_peak_freq,
+#                             haynesville_df_11178_10x_08_g_peak_freq,
+#                             haynesville_df_11178_10x_09_g_peak_freq,
+#                             haynesville_df_11178_10x_10_g_peak_freq,
+#                             haynesville_df_11178_10x_11_g_peak_freq,
+#                             haynesville_df_11226_10x_01_g_peak_freq,
+#                             haynesville_df_11226_10x_02_g_peak_freq,
+#                             haynesville_df_11226_10x_03_g_peak_freq,
+#                             haynesville_df_11226_10x_04_g_peak_freq,
+#                             haynesville_df_11226_10x_05_g_peak_freq,
+#                             haynesville_df_11226_10x_06_g_peak_freq,
+#                             haynesville_df_11226_10x_07_g_peak_freq)
+#
+#haynesville_d_peak_freq <- c(haynesville_df_10979_10x_01_d_peak_freq,
+#                             haynesville_df_10979_10x_02_d_peak_freq,
+#                             haynesville_df_10979_10x_03_d_peak_freq,
+#                             haynesville_df_10979_10x_04_d_peak_freq,
+#                             haynesville_df_10979_10x_05_d_peak_freq,
+#                             haynesville_df_10979_10x_06_d_peak_freq,
+#                             haynesville_df_10979_10x_07_d_peak_freq,
+#                             haynesville_df_10979_10x_08_d_peak_freq,
+#                             haynesville_df_10979_10x_09_d_peak_freq,
+#                             haynesville_df_10979_10x_10_d_peak_freq,
+#                             haynesville_df_10979_10x_11_d_peak_freq,
+#                             haynesville_df_11071_10x_01_d_peak_freq,
+#                             haynesville_df_11071_10x_02_d_peak_freq,
+#                             haynesville_df_11071_10x_03_d_peak_freq,
+#                             haynesville_df_11071_10x_04_d_peak_freq,
+#                             haynesville_df_11071_10x_05_d_peak_freq,
+#                             haynesville_df_11071_10x_06_d_peak_freq,
+#                             haynesville_df_11071_10x_07_d_peak_freq,
+#                             haynesville_df_11071_10x_08_d_peak_freq,
+#                             haynesville_df_11071_10x_09_d_peak_freq,
+#                             haynesville_df_11071_10x_10_d_peak_freq,
+#                             haynesville_df_11071_10x_11_d_peak_freq,
+#                             haynesville_df_11122_10x_01_d_peak_freq,
+#                             haynesville_df_11122_10x_02_d_peak_freq,
+#                             haynesville_df_11122_10x_03_d_peak_freq,
+#                             haynesville_df_11122_10x_04_d_peak_freq,
+#                             haynesville_df_11122_10x_05_d_peak_freq,
+#                             haynesville_df_11122_10x_06_d_peak_freq,
+#                             haynesville_df_11122_10x_07_d_peak_freq,
+#                             haynesville_df_11178_10x_01_d_peak_freq,
+#                             haynesville_df_11178_10x_02_d_peak_freq,
+#                             haynesville_df_11178_10x_03_d_peak_freq,
+#                             haynesville_df_11178_10x_04_d_peak_freq,
+#                             haynesville_df_11178_10x_05_d_peak_freq,
+#                             haynesville_df_11178_10x_06_d_peak_freq,
+#                             haynesville_df_11178_10x_07_d_peak_freq,
+#                             haynesville_df_11178_10x_08_d_peak_freq,
+#                             haynesville_df_11178_10x_09_d_peak_freq,
+#                             haynesville_df_11178_10x_10_d_peak_freq,
+#                             haynesville_df_11178_10x_11_d_peak_freq,
+#                             haynesville_df_11226_10x_01_d_peak_freq,
+#                             haynesville_df_11226_10x_02_d_peak_freq,
+#                             haynesville_df_11226_10x_03_d_peak_freq,
+#                             haynesville_df_11226_10x_04_d_peak_freq,
+#                             haynesville_df_11226_10x_05_d_peak_freq,
+#                             haynesville_df_11226_10x_06_d_peak_freq,
+#                             haynesville_df_11226_10x_07_d_peak_freq)
+#
+#haynesville_peak_freq_diff <- abs(haynesville_g_peak_freq - haynesville_d_peak_freq)
+#
+#haynesville_g_peak_intensity <- c(haynesville_df_10979_10x_01_g_peak_intensity,
+#                                  haynesville_df_10979_10x_02_g_peak_intensity,
+#                                  haynesville_df_10979_10x_03_g_peak_intensity,
+#                                  haynesville_df_10979_10x_04_g_peak_intensity,
+#                                  haynesville_df_10979_10x_05_g_peak_intensity,
+#                                  haynesville_df_10979_10x_06_g_peak_intensity,
+#                                  haynesville_df_10979_10x_07_g_peak_intensity,
+#                                  haynesville_df_10979_10x_08_g_peak_intensity,
+#                                  haynesville_df_10979_10x_09_g_peak_intensity,
+#                                  haynesville_df_10979_10x_10_g_peak_intensity,
+#                                  haynesville_df_10979_10x_11_g_peak_intensity,
+#                                  haynesville_df_11071_10x_01_g_peak_intensity,
+#                                  haynesville_df_11071_10x_02_g_peak_intensity,
+#                                  haynesville_df_11071_10x_03_g_peak_intensity,
+#                                  haynesville_df_11071_10x_04_g_peak_intensity,
+#                                  haynesville_df_11071_10x_05_g_peak_intensity,
+#                                  haynesville_df_11071_10x_06_g_peak_intensity,
+#                                  haynesville_df_11071_10x_07_g_peak_intensity,
+#                                  haynesville_df_11071_10x_08_g_peak_intensity,
+#                                  haynesville_df_11071_10x_09_g_peak_intensity,
+#                                  haynesville_df_11071_10x_10_g_peak_intensity,
+#                                  haynesville_df_11071_10x_11_g_peak_intensity,
+#                                  haynesville_df_11122_10x_01_g_peak_intensity,
+#                                  haynesville_df_11122_10x_02_g_peak_intensity,
+#                                  haynesville_df_11122_10x_03_g_peak_intensity,
+#                                  haynesville_df_11122_10x_04_g_peak_intensity,
+#                                  haynesville_df_11122_10x_05_g_peak_intensity,
+#                                  haynesville_df_11122_10x_06_g_peak_intensity,
+#                                  haynesville_df_11122_10x_07_g_peak_intensity,
+#                                  haynesville_df_11178_10x_01_g_peak_intensity,
+#                                  haynesville_df_11178_10x_02_g_peak_intensity,
+#                                  haynesville_df_11178_10x_03_g_peak_intensity,
+#                                  haynesville_df_11178_10x_04_g_peak_intensity,
+#                                  haynesville_df_11178_10x_05_g_peak_intensity,
+#                                  haynesville_df_11178_10x_06_g_peak_intensity,
+#                                  haynesville_df_11178_10x_07_g_peak_intensity,
+#                                  haynesville_df_11178_10x_08_g_peak_intensity,
+#                                  haynesville_df_11178_10x_09_g_peak_intensity,
+#                                  haynesville_df_11178_10x_10_g_peak_intensity,
+#                                  haynesville_df_11178_10x_11_g_peak_intensity,
+#                                  haynesville_df_11226_10x_01_g_peak_intensity,
+#                                  haynesville_df_11226_10x_02_g_peak_intensity,
+#                                  haynesville_df_11226_10x_03_g_peak_intensity,
+#                                  haynesville_df_11226_10x_04_g_peak_intensity,
+#                                  haynesville_df_11226_10x_05_g_peak_intensity,
+#                                  haynesville_df_11226_10x_06_g_peak_intensity,
+#                                  haynesville_df_11226_10x_07_g_peak_intensity)
+#
+#haynesville_d_peak_intensity <- c(haynesville_df_10979_10x_01_d_peak_intensity,
+#                                  haynesville_df_10979_10x_02_d_peak_intensity,
+#                                  haynesville_df_10979_10x_03_d_peak_intensity,
+#                                  haynesville_df_10979_10x_04_d_peak_intensity,
+#                                  haynesville_df_10979_10x_05_d_peak_intensity,
+#                                  haynesville_df_10979_10x_06_d_peak_intensity,
+#                                  haynesville_df_10979_10x_07_d_peak_intensity,
+#                                  haynesville_df_10979_10x_08_d_peak_intensity,
+#                                  haynesville_df_10979_10x_09_d_peak_intensity,
+#                                  haynesville_df_10979_10x_10_d_peak_intensity,
+#                                  haynesville_df_10979_10x_11_d_peak_intensity,
+#                                  haynesville_df_11071_10x_01_d_peak_intensity,
+#                                  haynesville_df_11071_10x_02_d_peak_intensity,
+#                                  haynesville_df_11071_10x_03_d_peak_intensity,
+#                                  haynesville_df_11071_10x_04_d_peak_intensity,
+#                                  haynesville_df_11071_10x_05_d_peak_intensity,
+#                                  haynesville_df_11071_10x_06_d_peak_intensity,
+#                                  haynesville_df_11071_10x_07_d_peak_intensity,
+#                                  haynesville_df_11071_10x_08_d_peak_intensity,
+#                                  haynesville_df_11071_10x_09_d_peak_intensity,
+#                                  haynesville_df_11071_10x_10_d_peak_intensity,
+#                                  haynesville_df_11071_10x_11_d_peak_intensity,
+#                                  haynesville_df_11122_10x_01_d_peak_intensity,
+#                                  haynesville_df_11122_10x_02_d_peak_intensity,
+#                                  haynesville_df_11122_10x_03_d_peak_intensity,
+#                                  haynesville_df_11122_10x_04_d_peak_intensity,
+#                                  haynesville_df_11122_10x_05_d_peak_intensity,
+#                                  haynesville_df_11122_10x_06_d_peak_intensity,
+#                                  haynesville_df_11122_10x_07_d_peak_intensity,
+#                                  haynesville_df_11178_10x_01_d_peak_intensity,
+#                                  haynesville_df_11178_10x_02_d_peak_intensity,
+#                                  haynesville_df_11178_10x_03_d_peak_intensity,
+#                                  haynesville_df_11178_10x_04_d_peak_intensity,
+#                                  haynesville_df_11178_10x_05_d_peak_intensity,
+#                                  haynesville_df_11178_10x_06_d_peak_intensity,
+#                                  haynesville_df_11178_10x_07_d_peak_intensity,
+#                                  haynesville_df_11178_10x_08_d_peak_intensity,
+#                                  haynesville_df_11178_10x_09_d_peak_intensity,
+#                                  haynesville_df_11178_10x_10_d_peak_intensity,
+#                                  haynesville_df_11178_10x_11_d_peak_intensity,
+#                                  haynesville_df_11226_10x_01_d_peak_intensity,
+#                                  haynesville_df_11226_10x_02_d_peak_intensity,
+#                                  haynesville_df_11226_10x_03_d_peak_intensity,
+#                                  haynesville_df_11226_10x_04_d_peak_intensity,
+#                                  haynesville_df_11226_10x_05_d_peak_intensity,
+#                                  haynesville_df_11226_10x_06_d_peak_intensity,
+#                                  haynesville_df_11226_10x_07_d_peak_intensity)
+#
+#haynesville_peak_intensity_diff <- abs(haynesville_g_peak_intensity - haynesville_d_peak_intensity)
+#
+#haynesville_final_df = data.frame(haynesville_sample_no,
+#                                  haynesville_g_peak_freq,
+#                                  haynesville_d_peak_freq,
+#                                  haynesville_peak_freq_diff,
+#                                  haynesville_g_peak_intensity,
+#                                  haynesville_d_peak_intensity,
+#                                  haynesville_peak_intensity_diff)
+#
+#write.csv(haynesville_final_df, "./haynesville_final_df.csv", row.names=TRUE)
+##str(haynesville_final_df)
+#
+#haynesville_final_df_aggregates <-
+#    haynesville_final_df %>%
+#    group_by(haynesville_sample_no) %>%
+#    summarize(haynesville_peak_freq_diff_average = round(mean(haynesville_peak_freq_diff),2),
+#              haynesville_peak_freq_diff_maximum = round(max(haynesville_peak_freq_diff),2),
+#              haynesville_peak_freq_diff_median = round(median(haynesville_peak_freq_diff),2),
+#              haynesville_peak_freq_diff_minimum = round(min(haynesville_peak_freq_diff),2),
+#              haynesville_peak_intensity_diff_average = round(mean(haynesville_peak_intensity_diff),2),
+#              haynesville_peak_intensity_diff_maximum = round(max(haynesville_peak_intensity_diff),2),
+#              haynesville_peak_intensity_diff_median = round(median(haynesville_peak_intensity_diff),2),
+#              haynesville_peak_intensity_diff_minimum = round(min(haynesville_peak_intensity_diff),2))
+#
+#write.csv(haynesville_final_df_aggregates, "./haynesville_final_df_aggregates.csv", row.names=TRUE)
+##str(haynesville_final_df_aggregates)
+#
+#```
+#
+#### Plots and Figures 
+#
+#```{r}
+#haynesville_boxplots <-
+#    ggplot(haynesville_final_df,
+#        aes(
+#            x = haynesville_peak_freq_diff, 
+#            y = haynesville_sample_no
+#        )
+#    ) + 
+#    geom_boxplot(
+#        color = "black",
+#    #   fill = "#E08B00"
+#        fill = "#E34234"
+#    ) +
+#    scale_x_continuous(
+#        limits = c(200,300),
+#        name = bquote('Difference in Raman Shift ' (cm^-1))
+#    ) +
+#    scale_y_discrete(
+#        name = "Sample Number"
+#    ) +
+#    ggtitle(
+#        bquote('Difference Between D and G Bands at Peak Intensities \n (Haynesville Formation)')
+#    ) + 
+#    theme_bw() +
+#    theme(
+#        plot.title = element_text(hjust = 0.5, size = 12),
+#        panel.grid.major.x = element_line(size=0.6),
+#        # panel.grid.major.x = element_line( size=.1, color="black" ),
+#        panel.axis.title = element_text(size = 10),
+#        panel.axis.text = element_text(size = 6),
+#        panel.grid.major.y = element_blank(),
+#        panel.grid.minor.y = element_blank()
+#    )
+#
+#haynesville_boxplots
+#
+#ggsave("haynesville_boxplots.png", haynesville_boxplots, path = "./figures/")
+#
+#haynesville_ridgelineplots <-
+#    ggplot(haynesville_final_df,
+#        aes(
+#            x = haynesville_peak_freq_diff, 
+#            y = haynesville_sample_no
+#        )
+#    ) + 
+#    geom_density_ridges(
+#                        aes(fill = haynesville_sample_no),
+#                        alpha = 0.7
+#    ) +
+#    scale_x_continuous(
+##        trans='log10',
+#        name = bquote('Difference in Raman Shift ' (cm^-1)),
+#        limits = c(200,300),
+#        breaks = c(200, 225, 250, 275, 300),
+#        labels = c("200", "225" , "250", "275", "300"),#,
+#        expand = expansion(mult = c(0.01,0.01))
+#
+#    ) +
+#    scale_y_discrete(
+##        name = "Sample Number",
+#         breaks = NULL,
+##         labels = c("10979_10X",
+##                    "11071_10X",
+##                    "11122_10X", 
+##                    "11178_10X",
+##                    "11226_10X"
+##         )#,
+#         expand = expansion(mult = c(0.075,0.5)) 
+#    ) +
+#    scale_fill_discrete(
+#        name = "Sample Number"#,
+##         expand = expansion(mult = c(0.075,0.175))   
+#    ) +
+#
+#    ggtitle(
+#        bquote('Difference Between D and G Bands at Peak Intensities \n (Haynesville Formation)')
+#    ) + 
+#    theme_bw() +
+#    theme(
+#        plot.title = element_text(hjust = 0.5, size = 12),
+#        panel.grid.major.x = element_line(size=0.6),
+#        # panel.grid.major.x = element_line( size=.1, color="black" ),
+#        panel.axis.title.x = element_text(size = 8),
+#        panel.axis.text.x = element_text(size = 6),
+#        panel.axis.title.y = element_blank(),
+#        panel.axis.text.y=element_blank(), 
+#        panel.axis.ticks.y=element_blank(),
+#        panel.grid.major.y = element_blank(),
+#        panel.grid.minor.y = element_blank(),
+#        panel.fill.title = element_text(size = 8),
+#        panel.fill.text = element_text(size = 6)
+#    ) +
+#    ylab("") +
+#    scale_fill_viridis(
+#                       discrete = TRUE,
+#                       name = "Sample Number"  
+#    ) +
+#    guides(
+#           fill = guide_legend(reverse = TRUE)
+#    )
+#
+#haynesville_ridgelineplots
+#
+#ggsave("haynesville_ridgelineplots.png", haynesville_ridgelineplots, path = "./figures/")
+#
+#haynesville_lineplots <- 
+#    haynesville_df_list_updated %>%
+#        ggplot(
+#            aes(
+#                raman_shift, 
+#                intensity
+#            )
+#        ) + 
+#        geom_line() +
+#        scale_color_identity() +
+#        scale_x_continuous(name = bquote('Raman Shift ' (cm^-1)), 
+#                           limits = c(1100,1700),
+#                           breaks = c(1100, 1200, 1300, 1400, 1500, 1600, 1700),
+#                           labels = c("1100", "1200", "1300", "1400", "1500", "1600", "1700"),#,
+#                           expand = expansion(mult = c(0.05,0.05))
+#        ) + 
+#        scale_y_continuous(name = "Intensity", 
+#                           limits = c(0,28000), 
+#                           breaks = c(0, 7000, 14000, 21000, 28000),
+#                           labels = c("0", "7000", "14000", "21000", "28000"),#,
+#                           expand = expansion(mult = c(0.1,0.1))
+#        ) +
+#        facet_wrap(
+#                   vars(sample_no), 
+#                   scales = "free", 
+#                   ncol = 2
+#        ) +
+#        ggtitle(
+##            bquote('Raman Spectra of Samples from \n Haynesville Formation')
+#            bquote('Raman Spectra of Samples from Haynesville Formation')
+#        ) + 
+#        theme_bw() +
+#        theme(
+#            plot.title = element_text(hjust = 0.5, size = 14),
+#            panel.axis.title = element_text(size = 10),
+#            panel.axis.text = element_text(size = 6),
+#            panel.grid.major.x = element_line(size=0.6),
+##            panel.grid.major.x = element_blank(),
+##            panel.grid.minor.x = element_blank(),
+##            panel.grid.major.x = element_line( size=.1, color="black" ),
+##            panel.grid.major.y = element_line(size=0.6),
+#            panel.grid.major.y = element_blank(),
+#            panel.grid.minor.y = element_blank()
+#        )
+#
+#haynesville_lineplots
+#
+#aspect_ratio <- 1
+#
+#ggsave("haynesville_lineplots.png", 
+#       haynesville_lineplots, 
+#       height = 10 , 
+#       width = 10 * aspect_ratio, 
+#       path = "./figures/"
+#)
+#
+#haynesville_avg_lineplots <- 
+#    haynesville_df_list_updated %>%
+#        group_by(sample_no, raman_shift) %>%
+#        mutate(mean_intensity = mean(intensity)) %>%
+##        ungroup %>%
+#        ggplot(
+#            aes(
+#                raman_shift, 
+##                intensity
+#                mean_intensity
+#            )
+#        ) + 
+#        geom_line() +
+#        scale_color_identity() +
+#        scale_x_continuous(name = bquote('Raman Shift ' (cm^-1)), 
+#                           limits = c(1100,1700),
+#                           breaks = c(1100, 1200, 1300, 1400, 1500, 1600, 1700),
+#                           labels = c("1100", "1200", "1300", "1400", "1500", "1600", "1700"),#,
+#                           expand = expansion(mult = c(0.05,0.05))
+#        ) + 
+#        scale_y_continuous(name = "Intensity", 
+#                           limits = c(0,25000), 
+#                           breaks = c(0, 5000, 10000, 15000, 20000, 25000),
+#                           labels = c("0", "5000", "10000", "15000", "20000", "25000"),#,
+#                           expand = expansion(mult = c(0.05,0.1))
+#        ) +
+#        facet_wrap(
+#                   vars(sample_no), 
+#                   scales = "free", 
+#                   ncol = 2
+#        ) +
+#        ggtitle(
+##            bquote('Raman Spectra (Averaged) of Samples from \n Haynesville Formation')
+#            bquote('Raman Spectra (Averaged) of Samples from Haynesville Formation')
+#        ) + 
+#        theme_bw() +
+#        theme(
+#            plot.title = element_text(hjust = 0.5, size = 14),
+#            panel.axis.title = element_text(size = 10),
+#            panel.axis.text = element_text(size = 6),
+#            panel.grid.major.x = element_line(size=0.6),
+##            panel.grid.major.x = element_blank(),
+##            panel.grid.minor.x = element_blank(),
+##            panel.grid.major.x = element_line( size=.1, color="black" ),
+##            panel.grid.major.y = element_line(size=0.6),
+#            panel.grid.major.y = element_blank(),
+#            panel.grid.minor.y = element_blank()
+#        )
+#
+#haynesville_avg_lineplots
+#
+#aspect_ratio <- 1
+#
+#ggsave("haynesville_avg_lineplots.png", 
+#       haynesville_avg_lineplots, 
+#       height = 10 , 
+#       width = 10 * aspect_ratio, 
+#       path = "./figures/"
+#)
+#
+#```
